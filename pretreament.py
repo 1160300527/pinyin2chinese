@@ -6,8 +6,28 @@ DICTIONARY_PATH = PATH+"/dictionary.json"
 TRANSFER_PATH = PATH+"/transfermatrix.json"
 SENTENCE_PATH = PATH+"/sentences.txt"
 
+
+def possibility(trans):
+    for key in trans:
+        sum = 0
+        for t in trans[key]:
+            sum+=trans[key][t]
+        for t in trans[key]:
+            trans[key][t]=trans[key][t]/sum
+
+
+def addDictionary(dictionary,key,value):
+    if key in dictionary:
+        if value in dictionary[key]:
+            dictionary[key][value]=dictionary[key][value]+1
+        else:
+            dictionary[key][value]=1
+    else:
+        dictionary[key]={value:1}
+
+
 def getTransfer(path,dict_path,trans_path):
-    dict = {}
+    dictionary = {}
     trans = {}
     with open(path,encoding='utf-8') as file:
         lines = file.readlines()
@@ -21,27 +41,18 @@ def getTransfer(path,dict_path,trans_path):
             for i in range(len(PinYin)):
                 piny = PinYin[i]
                 hanzi = every_word[i]
-                if piny in dict:
-                    dict[piny].append(hanzi)
-                else:
-                    dict[piny]=[hanzi]
+                addDictionary(dictionary,piny,hanzi)
                 if preword!=None:
-                    if preword in trans:
-                        if hanzi in trans[preword]:
-                            trans[preword][hanzi]=trans[preword][hanzi]+1
-                        else:
-                            trans[preword][hanzi]=1
-                    else:
-                        trans[preword]={hanzi:1}
+                    addDictionary(trans,preword,hanzi)
                 preword = hanzi
-    for key in trans:
-        for t in trans[key]:
-            trans[key][t]=trans[key][t]/len(trans[key])
+    possibility(trans)
+    possibility(dictionary)
     dict_file = open(dict_path,'w',encoding='utf-8')
     transfermatrix_file = open(trans_path,'w',encoding='utf-8')
-    json.dump(dict,dict_file)
+    json.dump(dictionary,dict_file)
     json.dump(trans,transfermatrix_file)
     dict_file.close()
     transfermatrix_file.close()
 
-getTransfer(SENTENCE_PATH,DICTIONARY_PATH,TRANSFER_PATH)
+if __name__ == "__main__":
+    getTransfer(SENTENCE_PATH,DICTIONARY_PATH,TRANSFER_PATH)
